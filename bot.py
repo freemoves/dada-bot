@@ -18,8 +18,8 @@ FOLDER_ID = '1BN7fZofdfYg3BK9MLZrPWWaIdzdumP7j'
 SPREADSHEET_ID = '1RL-3OTylVKG6HpqrzubAqqWZcqET6FXCbca1r-Ov9Rs'
 LOCAL_DOWNLOAD_PATH = tempfile.gettempdir()
 
-PAGE_ACCESS_TOKEN = os.getenv('PAGE_ACCESS_TOKEN')'EAAj8TeyzlZBcBSOjOXTZBiBNxvIKZBcwGvYTUN2tvFlUAU3kY06pxbkUtiBgG1x0Y4CS42MxnWqyXu6y65BB2F7JzV5VqkwOUQEKbT4g5Qudxxvt7wCZA3Q9jv9IZCu3ZBIJkcV8WwtLiduIntelW9AoZAM4bZBH8j5pfLRQQ6viZChx12b4fcEZCZBVHclF5ZADxW1mIzdCH4nvWruGTrz5YXap3nfb')
-PAE_ID = '1290868640770104'
+PAGE_ACCESS_TOKEN = os.getenv('PAGE_ACCESS_TOKEN')
+PAGE_ID = '1290868640770104'
 
 def authenticate_google():
     creds_json_env = os.getenv('GOOGLE_CREDENTIALS_JSON')
@@ -115,4 +115,4 @@ def run_automation():
 
 if __name__ == "__main__":
     run_automation()
-  
+    
