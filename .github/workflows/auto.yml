@@ -1,9 +1,10 @@
-Name: Facebook Auto Upload Bot
+name: Facebook Auto Upload Bot
 
 on:
   schedule:
     - cron: '0 */3 * * *'
   workflow_dispatch:
+  
 
 jobs:
   run-bot:
