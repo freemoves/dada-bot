@@ -2,6 +2,8 @@ import os
 import io
 import tempfile
 import logging
+import random
+import time
 import requests
 import gspread
 from googleapiclient.discovery import build
@@ -49,8 +51,6 @@ def authenticate_google():
 
 def get_smart_caption_and_tags(clean_name):
     """Smart Caption & Hashtag Rotation Feature"""
-    import random
-    
     captions = [
         f"Zindagi ka naya kissa aur purane tajurbe! Suno Dada Ji ki zubani: {clean_name}",
         f"Kuch baatein dil ko chu jaati hain... Suniye yeh khaas kissa: {clean_name}",
@@ -142,6 +142,11 @@ def run_automation():
 
         sheet.append_row([file_name, description, hashtags, "Downloaded"])
 
+        # --- Natural Human-like Delay Feature ---
+        delay_seconds = random.randint(15, 40)
+        print(f"Insaan jaisa natural wait ho raha hai ({delay_seconds} seconds)...")
+        time.sleep(delay_seconds)
+
         print("Uploading video to Facebook Page...")
         url = f"https://graph-video.facebook.com/v25.0/{PAGE_ID}/videos"
         full_caption = f"{description}\n\n{hashtags}"
@@ -176,4 +181,3 @@ def run_automation():
 
 if __name__ == "__main__":
     run_automation()
-        
