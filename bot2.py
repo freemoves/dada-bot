@@ -28,20 +28,14 @@ FOLDER_ID = '1qQrJbihELRD89ERudZIZoAoagVp_QeyT'
 SPREADSHEET_ID = '1fXl3zUmJn6JTbGS15dtGpG5u0o23_-Gx8lFd7gdp3BM'
 LOCAL_DOWNLOAD_PATH = tempfile.gettempdir()
 
-# GitHub Secrets se dono Facebook tokens secure tareeqe se uthayega
+# GitHub Secrets se tokens secure tareeqe se uthayega
 PAGE_TOKENS = [
     os.getenv('FB_TOKEN_1'),
     os.getenv('FB_TOKEN_2')
 ]
 
 def authenticate_google():
-    # --- GOOGLE JSON KEY GUIDE ---
-    # 1. Google Cloud Console (console.cloud.google.com) par jao.
-    # 2. Service Account ki JSON key download karo.
-    # 3. Uss JSON file ka poora text copy karke GitHub ke Secrets me 
-    #    'GOOGLE_CREDENTIALS_JSON' naam se save karo.
-    
-    creds_json_env = os.getenv('GOOGLE_CREDENTIALS_JSON')
+    creds_json_env = os.getenv('MY_JSON')
     if creds_json_env:
         import json
         creds_dict = json.loads(creds_json_env)
@@ -187,4 +181,4 @@ def run_automation():
 
 if __name__ == "__main__":
     run_automation()
-            
+        
