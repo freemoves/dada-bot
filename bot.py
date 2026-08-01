@@ -80,7 +80,7 @@ def run_automation():
         existing_names = [row[0] for row in list_of_rows[1:]] if len(list_of_rows) > 1 else []
 
         query = f"'{FOLDER_ID}' in parents and mimeType contains 'video/' and trashed = false"
-        results = drive_service.files().list(q=query, pageSize=20, fields="files(id, name)").execute()
+        results = drive_service.files().list(q=query, pageSize=50, fields="files(id, name)").execute()
         items = results.get('files', [])
 
         if not items:
@@ -89,8 +89,12 @@ def run_automation():
             return
 
         target_file = None
+        # Clean existing names for strict comparison (strip spaces and lowercase)
+        cleaned_existing = [str(name).strip().lower() for name in existing_names]
+
         for item in items:
-            if item['name'] not in existing_names:
+            item_name_clean = item['name'].strip().lower()
+            if item_name_clean not in cleaned_existing:
                 target_file = item
                 break
 
@@ -181,3 +185,4 @@ def run_automation():
 
 if __name__ == "__main__":
     run_automation()
+    
