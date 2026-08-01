@@ -9,6 +9,7 @@ import gspread
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 from google.oauth2 import service_account
+import json
 
 # --- Logging Setup ---
 logging.basicConfig(
@@ -33,39 +34,37 @@ PAGE_TOKENS = [
 ]
 
 def authenticate_google():
-    creds_json_env = os.getenv('MY_JSON')
-    if creds_json_env:
-        import json
-        # Temporary file banakar authenticate karenge taaki id_token ki error na aaye
-        creds_dict = json.loads(creds_json_env)
+    # Direct teri di gayi service account credentials yahan set hain bhai
+    creds_dict = {
+      "type": "service_account",
+      "project_id": "cogent-dragon-502615-v5",
+      "private_key_id": "9c2f66477dcdc2389bd758eadf076577afd1102a",
+      "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC2IeAHSQNWKI8c\n0SFAliX3vaKVc4TRNfp8jr4koEZSl1BqRIsJMdcS9QhfRYZZ4bDUEmNTC+pMcLx0\nxdvZiUfHOsc8Glm03U0oMdazmEvCdWY6UFWzMWF59fCZYxEXMucP5pc4EkFdXCz0\n7IeKeGSG4Ku1WfaORFmG+lyx6SRL8zy4GQozAz2JmaoFF+q/cnXL2LSewFRP4AcK\nP0b4wrLRz8bb/GxXHmFjtes77BOTRsO4G+snTkR+Bt0Xz2JUmsPKNqw2FXEx0lqA\nwRV4BK9Msu8+oGhxG71acXiFlZzIU8FlB6OZUBs7nG5YvDUv7u9rPaejrNH2fwoC\noI67hHVnAgMBAAECggEAOfRxix/qleH2GB9by2d70Wdgctn9a20XtcbeLl1pwyIv\nDoGdFGHtpDSgY2CGLdepIvJu9KAYABbngOjs2j3av0Su3SstXGYHBUFGpoNRqCEf\nVHL3sjuGXv6pfsWNTKp/6AliGQ+GCSUpkQ4q2x8QLfMT8HMeB4ssSc0k7d/YEupb\nhqxRpj6MpWG3JZ9U8A/p3Y3pMi8ahNEepshZA/DLDyV/YI/HYqP6NVUd5ecfgHaR\ndVhhWQ+oFXJjEMLpxEubqcHnYahvNfG+/j6HlkBJGwa7t/4bjTasf+W6yx9m4BH\njLpSu724R3YFqmPq8zfccpyptZ4uLyJrPyD1pGdMMQKBgQDqeN/AHEJRl5x8BkpT\ndqLrAGYjhiZuFUYfgHAZzoAn9xq94ciHyYOyE+PWKSFPOWZDL1z7IFQedRcO03NB\nEIKxLnA3Vo5Bfjt6CyCQmTRXLugxle7Fi6QOfM2C8+DGKtm3l+vfAKLz6MlENfkG\nwxHfMj1hE8hcmndfhEygaPzrFQKBgQDG2sjv513R/roS0yT2oDqKA/4iOD6bkX5w\nC/H+PkviYbW3UV8UbHejojlns6RTkN8s4bu6sQycdwVv6hnK3gwStXA0DMxbe8oX\n+UxH/ZZ7dAbNVd6/B8Zic1pXmDH+N5Bw598O8B+v0PFl/NXS+yFewe+/mSZVOtQm\5vblMm3NiwKBgQCeocann7bSouNRGaRhkWsp2OxBbnpDkgsONwQgwY/8+fZSrxXP\noGuEKGbFtq/9fJUOMVYT5Mxkis1dz3szcuso2oU7O0klUDUHHc4bZjt+HJMlMQ4J\nAq+syYz04vCYwdbomlUPW8vjfwPkLSvdAk7uFXxnWE3/MNZAfi6lfEJY/QKBgQCF\J4NdgWPFdfhLGq+ppWkNedb2OwtRSH+Nr7H/ON+/WwY/FnHAT1FddQdTdWsXue53\nM0Btpph3PQubAPr8aOtUq8HSWK+OormUjA6UNi5JxEu5u0JIUIB69BsOhI8VV0eV\nEu6+JfRR2muKi17yw854kQxlE7wjXh0pX4b7umTkOQKBgGINQM26mcCNbLrK+nXt\nmFAd4sMQ4l43wZ/dDPxoKvjZqfEIzxmBjxd5L3iwaaOsni30aQObGyTTDJeEerxw\nCr+yQquZ+aRXcms97Pa+6dDg42O8kTED4ExwOvq9DBf4yyfQ3Izs+NBk9ikIW53g\ntE2ln4E0WkLLWrT+M8dwDh+j\n-----END PRIVATE KEY-----\n",
+      "client_email": "my-bit@cogent-dragon-502615-v5.iam.gserviceaccount.com",
+      "client_id": "117485684752432754899",
+      "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+      "token_uri": "https://oauth2.googleapis.com/token",
+      "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+      "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/my-bit%40cogent-dragon-502615-v5.iam.gserviceaccount.com",
+      "universe_domain": "googleapis.com"
+    }
+    
+    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as temp_creds:
+        json.dump(creds_dict, temp_creds)
+        temp_creds_path = temp_creds.name
         
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as temp_creds:
-            json.dump(creds_dict, temp_creds)
-            temp_creds_path = temp_creds.name
-            
-        creds_drive = service_account.Credentials.from_service_account_file(
-            temp_creds_path, scopes=['https://www.googleapis.com/auth/drive']
-        )
-        creds_sheet = service_account.Credentials.from_service_account_file(
-            temp_creds_path, scopes=SCOPES
-        )
-        sheet_client = gspread.authorize(creds_sheet)
-        
-        # Cleanup temporary file
-        try:
-            os.remove(temp_creds_path)
-        except:
-            pass
-    else:
-        # Local testing ke liye agar file ho
-        SERVICE_ACCOUNT_FILE = 'credentials.json'
-        creds_drive = service_account.Credentials.from_service_account_file(
-            SERVICE_ACCOUNT_FILE, scopes=['https://www.googleapis.com/auth/drive']
-        )
-        creds_sheet = service_account.Credentials.from_service_account_file(
-            SERVICE_ACCOUNT_FILE, scopes=SCOPES
-        )
-        sheet_client = gspread.authorize(creds_sheet)
+    creds_drive = service_account.Credentials.from_service_account_file(
+        temp_creds_path, scopes=['https://www.googleapis.com/auth/drive']
+    )
+    creds_sheet = service_account.Credentials.from_service_account_file(
+        temp_creds_path, scopes=SCOPES
+    )
+    sheet_client = gspread.authorize(creds_sheet)
+    
+    try:
+        os.remove(temp_creds_path)
+    except:
+        pass
         
     drive_service = build('drive', 'v3', credentials=creds_drive)
     return drive_service, sheet_client
