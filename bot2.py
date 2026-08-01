@@ -17,7 +17,6 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-SERVICE_ACCOUNT_FILE = 'credentials.json'
 SCOPES = [
     'https://www.googleapis.com/auth/drive',
     'https://spreadsheets.google.com/feeds',
@@ -28,7 +27,6 @@ FOLDER_ID = '1qQrJbihELRD89ERudZIZoAoagVp_QeyT'
 SPREADSHEET_ID = '1fXl3zUmJn6JTbGS15dtGpG5u0o23_-Gx8lFd7gdp3BM'
 LOCAL_DOWNLOAD_PATH = tempfile.gettempdir()
 
-# GitHub Secrets se tokens secure tareeqe se uthayega
 PAGE_TOKENS = [
     os.getenv('FB_TOKEN_1'),
     os.getenv('FB_TOKEN_2')
@@ -38,10 +36,29 @@ def authenticate_google():
     creds_json_env = os.getenv('MY_JSON')
     if creds_json_env:
         import json
+        # Temporary file banakar authenticate karenge taaki id_token ki error na aaye
         creds_dict = json.loads(creds_json_env)
-        creds_drive = service_account.Credentials.from_service_account_info(creds_dict, scopes=['https://www.googleapis.com/auth/drive'])
-        sheet_client = gspread.authorize(service_account.Credentials.from_service_account_info(creds_dict, scopes=SCOPES))
+        
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as temp_creds:
+            json.dump(creds_dict, temp_creds)
+            temp_creds_path = temp_creds.name
+            
+        creds_drive = service_account.Credentials.from_service_account_file(
+            temp_creds_path, scopes=['https://www.googleapis.com/auth/drive']
+        )
+        creds_sheet = service_account.Credentials.from_service_account_file(
+            temp_creds_path, scopes=SCOPES
+        )
+        sheet_client = gspread.authorize(creds_sheet)
+        
+        # Cleanup temporary file
+        try:
+            os.remove(temp_creds_path)
+        except:
+            pass
     else:
+        # Local testing ke liye agar file ho
+        SERVICE_ACCOUNT_FILE = 'credentials.json'
         creds_drive = service_account.Credentials.from_service_account_file(
             SERVICE_ACCOUNT_FILE, scopes=['https://www.googleapis.com/auth/drive']
         )
@@ -49,6 +66,7 @@ def authenticate_google():
             SERVICE_ACCOUNT_FILE, scopes=SCOPES
         )
         sheet_client = gspread.authorize(creds_sheet)
+        
     drive_service = build('drive', 'v3', credentials=creds_drive)
     return drive_service, sheet_client
 
