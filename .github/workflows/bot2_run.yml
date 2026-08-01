@@ -30,5 +30,7 @@ jobs:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
           FB_TOKEN_1: ${{ secrets.FB_TOKEN_1 }}
           FB_TOKEN_2: ${{ secrets.FB_TOKEN_2 }}
+          FB_PAGE_ID_1: ${{ secrets.FB_PAGE_ID_1 }}
+          FB_PAGE_ID_2: ${{ secrets.FB_PAGE_ID_2 }}
         run: python bot2.py
         
