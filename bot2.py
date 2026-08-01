@@ -73,7 +73,6 @@ def run_automation():
     logging.info("Multi-Account Automation Process Started")
     
     try:
-        # Check tokens
         if not PAGE_TOKENS[0] or not PAGE_TOKENS[1]:
             print("Error: Facebook tokens (FB_TOKEN_1 ya FB_TOKEN_2) GitHub Secrets me nahi mile!")
             logging.error("Facebook tokens missing from environment variables.")
@@ -141,7 +140,6 @@ def run_automation():
 
         sheet.append_row([file_name, description, hashtags, "Downloaded"])
 
-        # Dono accounts par ek-ek karke upload karenge
         for index, token in enumerate(PAGE_TOKENS, start=1):
             delay_seconds = random.randint(10, 25)
             print(f"Account {index} par upload karne se pehle wait ho raha hai ({delay_seconds}s)...")
@@ -158,6 +156,8 @@ def run_automation():
                 files = {'source': video_file}
                 response = requests.post(url, data=payload, files=files)
                 result = response.json()
+                
+            print(f"Facebook API Response (Account {index}): {result}")
 
             if 'id' in result:
                 success_msg = f"Account {index} par Successfully Uploaded! Video ID: {result['id']}"
@@ -168,7 +168,6 @@ def run_automation():
                 print(error_msg)
                 logging.error(error_msg)
 
-        # Dono accounts par process hone ke baad sheet update kar denge
         updated_rows_count = len(sheet.get_all_values())
         sheet.update_cell(updated_rows_count, 4, "Uploaded to Both FBs")
 
