@@ -5,7 +5,6 @@ import logging
 import random
 import time
 import requests
-import gspread
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 from google.oauth2 import service_account
@@ -20,8 +19,7 @@ logging.basicConfig(
 
 SCOPES = [
     'https://www.googleapis.com/auth/drive',
-    'https://spreadsheets.google.com/feeds',
-    'https://spreadsheets.google.com/auth/spreadsheets'
+    'https://www.googleapis.com/auth/spreadsheets'
 ]
 
 FOLDER_ID = '1qQrJbihELRD89ERudZIZoAoagVp_QeyT'
@@ -34,7 +32,6 @@ PAGE_TOKENS = [
 ]
 
 def authenticate_google():
-    # GitHub Secret se direct JSON uthayega
     creds_json_string = os.getenv('GOOGLE_CREDENTIALS')
     if not creds_json_string:
         raise ValueError("GitHub Secrets me GOOGLE_CREDENTIALS nahi mila!")
@@ -45,21 +42,18 @@ def authenticate_google():
         json.dump(creds_dict, temp_creds)
         temp_creds_path = temp_creds.name
         
-    creds_drive = service_account.Credentials.from_service_account_file(
-        temp_creds_path, scopes=['https://www.googleapis.com/auth/drive']
-    )
-    creds_sheet = service_account.Credentials.from_service_account_file(
+    creds = service_account.Credentials.from_service_account_file(
         temp_creds_path, scopes=SCOPES
     )
-    sheet_client = gspread.authorize(creds_sheet)
     
     try:
         os.remove(temp_creds_path)
     except:
         pass
         
-    drive_service = build('drive', 'v3', credentials=creds_drive)
-    return drive_service, sheet_client
+    drive_service = build('drive', 'v3', credentials=creds)
+    sheets_service = build('sheets', 'v4', credentials=creds)
+    return drive_service, sheets_service
 
 def get_smart_caption_and_tags(clean_name):
     captions = [
@@ -87,10 +81,12 @@ def run_automation():
             logging.error("Facebook tokens missing from environment variables.")
             return
 
-        drive_service, sheet_client = authenticate_google()
+        drive_service, sheets_service = authenticate_google()
+        sheet_api = sheets_service.spreadsheets()
         
-        sheet = sheet_client.open_by_key(SPREADSHEET_ID).sheet1
-        list_of_rows = sheet.get_all_values()
+        # Read sheet data
+        result_range = sheet_api.values().get(spreadsheetId=SPREADSHEET_ID, range='Sheet1!A:D').execute()
+        list_of_rows = result_range.get('values', [])
         existing_names = [row[0] for row in list_of_rows[1:]] if len(list_of_rows) > 1 else []
 
         query = f"'{FOLDER_ID}' in parents and mimeType contains 'video/' and trashed = false"
@@ -147,7 +143,14 @@ def run_automation():
         description, hashtags = get_smart_caption_and_tags(clean_name)
         full_caption = f"{description}\n\n{hashtags}"
 
-        sheet.append_row([file_name, description, hashtags, "Downloaded"])
+        # Append row using standard Sheets API
+        append_body = {'values': [[file_name, description, hashtags, "Downloaded"]]}
+        sheet_api.values().append(
+            spreadsheetId=SPREADSHEET_ID,
+            range='Sheet1!A:D',
+            valueInputOption='RAW',
+            body=append_body
+        ).execute()
 
         for index, token in enumerate(PAGE_TOKENS, start=1):
             delay_seconds = random.randint(10, 25)
@@ -177,8 +180,16 @@ def run_automation():
                 print(error_msg)
                 logging.error(error_msg)
 
-        updated_rows_count = len(sheet.get_all_values())
-        sheet.update_cell(updated_rows_count, 4, "Uploaded to Both FBs")
+        # Update last row status
+        updated_range = sheet_api.values().get(spreadsheetId=SPREADSHEET_ID, range='Sheet1!D:D').execute()
+        total_rows = len(updated_range.get('values', []))
+        update_body = {'values': [["Uploaded to Both FBs"]]}
+        sheet_api.values().update(
+            spreadsheetId=SPREADSHEET_ID,
+            range=f'Sheet1!D{total_rows}',
+            valueInputOption='RAW',
+            body=update_body
+        ).execute()
 
         if os.path.exists(file_path):
             os.remove(file_path)
