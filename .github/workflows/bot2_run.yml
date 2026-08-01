@@ -2,8 +2,12 @@ name: Bot 2 Multi-Account Run
 
 on:
   workflow_dispatch:
-  # schedule:
-  #   - cron: '0 */6 * * *'  # Agar automatic chalana ho toh uncomment kar sakte ho
+  schedule:
+    - cron: '30 3 * * *'  # Subah 9:00 AM IST (03:30 UTC)
+    - cron: '30 6 * * *'  # Dopahar 12:00 PM IST (06:30 UTC)
+    - cron: '0 9 * * *'   # Dopahar 2:30 PM IST (09:00 UTC)
+    - cron: '30 12 * * *' # Sham 6:00 PM IST (12:30 UTC)
+    - cron: '30 15 * * *' # Raat 9:00 PM IST (15:30 UTC)
 
 jobs:
   run-bot2:
