@@ -35,6 +35,12 @@ PAGE_TOKENS = [
 ]
 
 def authenticate_google():
+    # --- GOOGLE JSON KEY GUIDE ---
+    # 1. Google Cloud Console (console.cloud.google.com) par jao.
+    # 2. Service Account ki JSON key download karo.
+    # 3. Uss JSON file ka poora text copy karke GitHub ke Secrets me 
+    #    'GOOGLE_CREDENTIALS_JSON' naam se save karo.
+    
     creds_json_env = os.getenv('GOOGLE_CREDENTIALS_JSON')
     if creds_json_env:
         import json
@@ -181,4 +187,4 @@ def run_automation():
 
 if __name__ == "__main__":
     run_automation()
-    
+            
