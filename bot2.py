@@ -24,15 +24,14 @@ SCOPES = [
     'https://spreadsheets.google.com/auth/spreadsheets'
 ]
 
-# Naye diye gaye IDs aur Tokens yahan set kar diye hain
 FOLDER_ID = '1qQrJbihELRD89ERudZIZoAoagVp_QeyT'
 SPREADSHEET_ID = '1fXl3zUmJn6JTbGS15dtGpG5u0o23_-Gx8lFd7gdp3BM'
 LOCAL_DOWNLOAD_PATH = tempfile.gettempdir()
 
-# Dono Facebook IDs ke tokens yahan hain
+# GitHub Secrets se dono Facebook tokens secure tareeqe se uthayega
 PAGE_TOKENS = [
-    'EAAj8TeyzlZBcBSJRuu5PDUZARmYuRHPxAeY9XmEb95Ti2bZCkQNI0IN2I6PmdIVoiVsTs1ZCZAhxSDoqcZB6RHWFs64XsMVZCFvxMNWtqEO4WEArCYF4rMCGl2N1jFQdMZBJ6YVFUqBS1JAuJiVUU0GMoK3CYq9ygziFaaRYi4fPb4vDZAHABQqCYk9HnCPZBIRFrlfuu7f1im5qCWkN1T9rkl',
-    'EAAj8TeyzlZBcBSD6qykZCM3xkDfWZCW14VSgu71HCjHPH6jSMC7BKXO8EaK3a6emeZCUzyvQjBkQ2sue7BSXEWxnNcZAn4iDMFlR33FgZCBXS21DqWXohnIwFgieewLnm4yc9ZAZBusuKFsTeitx2p5VTj2ZCYwIeAtSZA3Mqz9evTCWAccnxrV1MFE0IOA27WNdt68vZBsjkxIAjoDKojQbuWt'
+    os.getenv('FB_TOKEN_1'),
+    os.getenv('FB_TOKEN_2')
 ]
 
 def authenticate_google():
@@ -74,6 +73,12 @@ def run_automation():
     logging.info("Multi-Account Automation Process Started")
     
     try:
+        # Check tokens
+        if not PAGE_TOKENS[0] or not PAGE_TOKENS[1]:
+            print("Error: Facebook tokens (FB_TOKEN_1 ya FB_TOKEN_2) GitHub Secrets me nahi mile!")
+            logging.error("Facebook tokens missing from environment variables.")
+            return
+
         drive_service, sheet_client = authenticate_google()
         
         sheet = sheet_client.open_by_key(SPREADSHEET_ID).sheet1
@@ -143,7 +148,7 @@ def run_automation():
             time.sleep(delay_seconds)
 
             print(f"Uploading video to Facebook Account {index}...")
-            url = "https://graph-video.facebook.com/v25.0/me/videos"
+            url = f"https://graph-video.facebook.com/v25.0/me/videos"
             payload = {
                 'description': full_caption,
                 'access_token': token
@@ -177,3 +182,4 @@ def run_automation():
 
 if __name__ == "__main__":
     run_automation()
+    
