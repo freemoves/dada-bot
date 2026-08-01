@@ -84,10 +84,12 @@ def run_automation():
         drive_service, sheets_service = authenticate_google()
         sheet_api = sheets_service.spreadsheets()
         
-        # Read sheet data
+        # Google Sheet se saare purane uploaded/processed filenames nikal lo
         result_range = sheet_api.values().get(spreadsheetId=SPREADSHEET_ID, range='Sheet1!A:D').execute()
         list_of_rows = result_range.get('values', [])
-        existing_names = [row[0] for row in list_of_rows[1:]] if len(list_of_rows) > 1 else []
+        
+        # Column A ke saare names jo pehle se sheet me hain
+        existing_names = [row[0].strip().lower() for row in list_of_rows[1:] if len(row) > 0]
 
         query = f"'{FOLDER_ID}' in parents and mimeType contains 'video/' and trashed = false"
         results = drive_service.files().list(q=query, pageSize=50, fields="files(id, name)").execute()
@@ -99,16 +101,15 @@ def run_automation():
             return
 
         target_file = None
-        cleaned_existing = [str(name).strip().lower() for name in existing_names]
-
         for item in items:
             item_name_clean = item['name'].strip().lower()
-            if item_name_clean not in cleaned_existing:
+            # Agar file ka naam sheet me nahi hai, tabhi use target banayenge
+            if item_name_clean not in existing_names:
                 target_file = item
                 break
 
         if not target_file:
-            print("Sabhi videos pehle hi processed/uploaded hain!")
+            print("Sabhi videos pehle hi processed/uploaded hain! Koi nayi video nahi mili.")
             logging.info("Sabhi videos pehle hi processed/uploaded hain.")
             return
 
@@ -143,8 +144,8 @@ def run_automation():
         description, hashtags = get_smart_caption_and_tags(clean_name)
         full_caption = f"{description}\n\n{hashtags}"
 
-        # Append row using standard Sheets API
-        append_body = {'values': [[file_name, description, hashtags, "Downloaded"]]}
+        # Pehle hi sheet me entry daal do taaki agli baar yeh video dobara na uthe
+        append_body = {'values': [[file_name, description, hashtags, "Processing"]]}
         sheet_api.values().append(
             spreadsheetId=SPREADSHEET_ID,
             range='Sheet1!A:D',
@@ -152,7 +153,16 @@ def run_automation():
             body=append_body
         ).execute()
 
+        # Ab row index pata karo jo abhi add hui hai
+        updated_range = sheet_api.values().get(spreadsheetId=SPREADSHEET_ID, range='Sheet1!A:D').execute()
+        total_rows = len(updated_range.get('values', []))
+
+        success_count = 0
         for index, token in enumerate(PAGE_TOKENS, start=1):
+            if not token:
+                print(f"Account {index} ka token missing hai, skip kar rahe hain.")
+                continue
+
             delay_seconds = random.randint(10, 25)
             print(f"Account {index} par upload karne se pehle wait ho raha hai ({delay_seconds}s)...")
             time.sleep(delay_seconds)
@@ -175,15 +185,15 @@ def run_automation():
                 success_msg = f"Account {index} par Successfully Uploaded! Video ID: {result['id']}"
                 print(success_msg)
                 logging.info(success_msg)
+                success_count += 1
             else:
                 error_msg = f"Account {index} upload fail! Error: {result}"
                 print(error_msg)
                 logging.error(error_msg)
 
-        # Update last row status
-        updated_range = sheet_api.values().get(spreadsheetId=SPREADSHEET_ID, range='Sheet1!D:D').execute()
-        total_rows = len(updated_range.get('values', []))
-        update_body = {'values': [["Uploaded to Both FBs"]]}
+        # Status update karo sheet me
+        final_status = "Uploaded to Both FBs" if success_count == 2 else f"Uploaded to {success_count}/2 FBs"
+        update_body = {'values': [[final_status]]}
         sheet_api.values().update(
             spreadsheetId=SPREADSHEET_ID,
             range=f'Sheet1!D{total_rows}',
