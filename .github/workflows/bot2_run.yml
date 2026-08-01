@@ -28,7 +28,7 @@ jobs:
 
       - name: Run Bot 2
         env:
-          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+          MY_JSON: ${{ secrets.MY_JSON }}
           FB_TOKEN_1: ${{ secrets.FB_TOKEN_1 }}
           FB_TOKEN_2: ${{ secrets.FB_TOKEN_2 }}
         run: |
