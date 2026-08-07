@@ -28,23 +28,11 @@ FOLDER_ID = '1qQrJbihELRD89ERudZIZoAoagVp_QeyT'
 SPREADSHEET_ID = '1fXl3zUmJn6JTbGS15dtGpG5u0o23_-Gx8lFd7gdp3BM'
 LOCAL_DOWNLOAD_PATH = tempfile.gettempdir()
 
-# GitHub Secrets se tokens aur Page IDs fetch karna
-PAGE_CONFIGS = [
-    {
-        'token': os.getenv('FB_TOKEN_1'),
-        'page_id': os.getenv('FB_PAGE_ID_1'),
-        'name': 'Account/Page 1'
-    },
-    {
-        'token': os.getenv('FB_TOKEN_2'),
-        'page_id': os.getenv('FB_PAGE_ID_2'),
-        'name': 'Account/Page 2'
-    },
-    {
-        'token': os.getenv('FB_TOKEN_3'),
-        'page_id': os.getenv('FB_PAGE_ID_3'),
-        'name': 'Account/Page 3'
-    }
+# GitHub Secrets se token aur Page IDs uthana
+SHARED_TOKEN = os.getenv('PAGE_ACCESS_TOKEN')
+PAGES = [
+    {'id': os.getenv('FB_PAGE_ID_1'), 'name': 'Page 1'},
+    {'id': os.getenv('FB_PAGE_ID_2'), 'name': 'Page 2'}
 ]
 
 def authenticate_google():
@@ -82,17 +70,21 @@ def get_smart_caption_and_tags(clean_name):
     return random.choice(captions), random.choice(hashtag_pools)
 
 def run_automation():
-    print("--- Multi-Page & Large Folder Automation Started ---")
-    logging.info("Multi-Page & Large Folder Automation Started")
+    print("--- Dada Ji Automation Started ---")
+    logging.info("Dada Ji Automation Started")
     
     try:
+        if not SHARED_TOKEN:
+            print("Error: PAGE_ACCESS_TOKEN GitHub Secrets me nahi mila!")
+            return
+
         drive_service, sheet_client = authenticate_google()
         
         sheet = sheet_client.open_by_key(SPREADSHEET_ID).sheet1
         list_of_rows = sheet.get_all_values()
         existing_names = [row[0] for row in list_of_rows[1:]] if len(list_of_rows) > 1 else []
 
-        # Drive se saari 500+ videos nikalne ke liye Pagination (pageToken loop)
+        # Drive se saari 500+ videos nikalne ke liye Pagination
         items = []
         page_token = None
         query = f"'{FOLDER_ID}' in parents and mimeType contains 'video/' and trashed = false"
@@ -112,7 +104,6 @@ def run_automation():
 
         if not items:
             print("Google Drive folder me koi video nahi mili!")
-            logging.info("Google Drive folder me koi video nahi mili.")
             return
 
         target_file = None
@@ -125,14 +116,12 @@ def run_automation():
                 break
 
         if not target_file:
-            print("Sabhi 500+ videos pehle hi processed/uploaded hain!")
-            logging.info("Sabhi 500+ videos pehle hi processed/uploaded hain.")
+            print("Sabhi videos pehle hi processed/uploaded hain!")
             return
 
         file_id = target_file['id']
         file_name = target_file['name']
         print(f"Nayi video mili: {file_name}")
-        logging.info(f"Nayi video mili: {file_name}")
 
         os.makedirs(LOCAL_DOWNLOAD_PATH, exist_ok=True)
         file_path = os.path.join(LOCAL_DOWNLOAD_PATH, file_name)
@@ -163,24 +152,23 @@ def run_automation():
         sheet.append_row([file_name, description, hashtags, "Processing"])
 
         success_count = 0
-        for config in PAGE_CONFIGS:
-            token = config['token']
-            page_id = config['page_id']
-            label = config['name']
+        for index, page in enumerate(PAGES, start=1):
+            page_id = page['id']
+            page_label = page['name']
 
-            if not token or not page_id:
-                print(f"{label} ke liye Token ya Page ID GitHub Secrets me nahi mila, skip kar rahe hain.")
+            if not page_id:
+                print(f"{page_label} ID missing hai, skip kar rahe hain.")
                 continue
 
-            delay_seconds = random.randint(10, 25)
-            print(f"{label} par upload karne se pehle wait ho raha hai ({delay_seconds}s)...")
+            delay_seconds = random.randint(10, 20)
+            print(f"{page_label} par upload karne se pehle wait ho raha hai ({delay_seconds}s)...")
             time.sleep(delay_seconds)
 
-            print(f"Uploading video to {label} (Page ID: {page_id})...")
+            print(f"Uploading video to {page_label} (Page ID: {page_id})...")
             url = f"https://graph-video.facebook.com/v25.0/{page_id}/videos"
             payload = {
                 'description': full_caption,
-                'access_token': token
+                'access_token': SHARED_TOKEN
             }
             
             with open(file_path, 'rb') as video_file:
@@ -189,25 +177,19 @@ def run_automation():
                 result = response.json()
 
             if 'id' in result:
-                success_msg = f"{label} par Successfully Uploaded! Video ID: {result['id']}"
-                print(success_msg)
-                logging.info(success_msg)
+                print(f"{page_label} par Successfully Uploaded! Video ID: {result['id']}")
                 success_count += 1
             else:
-                error_msg = f"{label} upload fail! Error: {result}"
-                print(error_msg)
-                logging.error(error_msg)
+                print(f"{page_label} upload fail! Error: {result}")
 
         updated_rows_count = len(sheet.get_all_values())
-        sheet.update_cell(updated_rows_count, 4, f"Uploaded to {success_count}/3 Pages")
+        sheet.update_cell(updated_rows_count, 4, f"Uploaded to {success_count}/2 Pages")
 
         if os.path.exists(file_path):
             os.remove(file_path)
 
     except Exception as e:
-        critical_error = f"Automation script me unexpected error aa gaya: {str(e)}"
-        print(critical_error)
-        logging.critical(critical_error)
+        print(f"Automation script me unexpected error aa gaya: {str(e)}")
 
 if __name__ == "__main__":
     run_automation()
