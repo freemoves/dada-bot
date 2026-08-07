@@ -24,8 +24,9 @@ SCOPES = [
     'https://spreadsheets.google.com/auth/spreadsheets'
 ]
 
-FOLDER_ID = '1qQrJbihELRD89ERudZIZoAoagVp_QeyT'
-SPREADSHEET_ID = '1fXl3zUmJn6JTbGS15dtGpG5u0o23_-Gx8lFd7gdp3BM'
+# Naye diye gaye IDs yahan update kar diye hain
+FOLDER_ID = '1BN7fZofdfYg3BK9MLZrPWWaIdzdumP7j'
+SPREADSHEET_ID = '1RL-3OTylVKG6HpqrzubAqqWZcqET6FXCbca1r-Ov9Rs'
 LOCAL_DOWNLOAD_PATH = tempfile.gettempdir()
 
 # GitHub Secrets se token aur Page IDs uthana
@@ -84,7 +85,7 @@ def run_automation():
         list_of_rows = sheet.get_all_values()
         existing_names = [row[0] for row in list_of_rows[1:]] if len(list_of_rows) > 1 else []
 
-        # Drive se saari 500+ videos nikalne ke liye Pagination
+        # Drive se saari videos nikalne ke liye Pagination
         items = []
         page_token = None
         query = f"'{FOLDER_ID}' in parents and mimeType contains 'video/' and trashed = false"
